@@ -3,10 +3,12 @@
 namespace HemantMann\Flysystem\Dropbox;
 
 use League\Flysystem\Config;
-use Kunnu\Dropbox\Dropbox as Client;
-use Kunnu\Dropbox\Exceptions\DropboxClientException;
+use League\Flysystem\Util\MimeType;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
+
+use Kunnu\Dropbox\Dropbox as Client;
+use Kunnu\Dropbox\Exceptions\DropboxClientException;
 
 class Adapter extends AbstractAdapter {
     use NotSupportingVisibilityTrait;
@@ -116,43 +118,49 @@ class Adapter extends AbstractAdapter {
     /**
      * {@inheritdoc}
      */
-    public function has($path) {
-         
+    public function getMetadata($path) {
+        $location = $this->applyPathPrefix($path);
+        try {
+            $file = $this->client->getMetadata($location, ["include_media_info" => true]);
+            return $this->normalizeResponse($file);
+        } catch (DropboxClientException $e) {
+            return false;
+        }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getMetadata($path) {
-        
+    public function has($path) {
+        return $this->getMetadata($path);
     }
 
     /**
      * {@inheritdoc}
      */
     public function getMimetype($path) {
-        
+        return $this->getMetadata($path);
     }
 
     /**
      * {@inheritdoc}
      */
     public function getSize($path) {
-        
+        return $this->getMetadata($path);
     }
 
     /**
      * {@inheritdoc}
      */
     public function getTimestamp($path) {
-        
+        return $this->getMetadata($path);
     }
 
     /**
      * {@inheritdoc}
      */
     public function getClient() {
-        
+        return $this->client;
     }
 
     /**
@@ -172,5 +180,32 @@ class Adapter extends AbstractAdapter {
     public function applyPathPrefix($path) {
         $path = parent::applyPathPrefix($path);
         return '/' . ltrim(rtrim($path, '/'), '/');
+    }
+
+    /**
+     * Normalize a Dropbox File Response.
+     *
+     * @param object $obj
+     *
+     * @return array
+     */
+    protected function normalizeResponse($obj) {
+        $result = ['path' => ltrim($this->removePathPrefix($obj->getPathDisplay()), '/')];
+
+        $objClass = get_class($obj);
+        switch ($objClass) {
+            case 'Kunnu\Dropbox\Models\FolderMetadata':
+                $result['type'] = 'dir';
+                break;
+            
+            case 'Kunnu\Dropbox\Models\FileMetadata':
+            default:
+                $result['type'] = 'file';
+                $result['size'] = $obj->getSize();
+                $result['mimetype'] = MimeType::detectByFilename($obj->getName());
+                $result['timestamp'] = strtotime($obj->getServerModified());
+                break;
+        }
+        return $result;
     }
 }

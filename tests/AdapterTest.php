@@ -21,6 +21,38 @@ class AdapterTest extends TestCase {
         ];
     }
 
+    public function metadataProvider() {
+        return [
+            ['getMetadata'],
+            ['getMimetype'],
+            ['getTimestamp'],
+            ['getSize'],
+            ['has'],
+        ];
+    }
+
+    protected function getFileResponse() {
+        return ['.tag' => 'file', 'name' => 'file.pdf', 'path_display' => '/File.pdf', 'id' => 'id:123', 'size' => 21388];
+    }
+
+    /**
+     * @dataProvider metadataProvider
+     */
+    public function testGetMetadata($method) {
+        $arr = $this->getFileResponse();
+        $this->mock->getMetadata(Argument::type('string'), Argument::type('array'))->willReturn(ModelFactory::make($arr));
+        $this->assertInternalType('array', $this->adapter->{$method}('one'));
+    }
+
+    /**
+     * @dataProvider metadataProvider
+     */
+    public function testMetaDataFail($method) {
+        $this->mock->getMetadata(Argument::any(), Argument::any())->willThrow(new DropboxClientException('Message'));
+        $resp = $this->adapter->{$method}('one');
+        $this->assertFalse($resp);
+    }
+
     /**
      * @dataProvider  dropboxProvider
      */
