@@ -101,4 +101,19 @@ class AdapterTest extends TestCase {
         $this->mock->copy(Argument::type('string'), Argument::type('string'))->willThrow(new DropboxClientException('Message'));
         $this->assertFalse($this->adapter->copy('/something', '/'));
     }
+
+    public function testListContents() {
+        $this->mock->listFolder(Argument::any())->willReturn(
+            ModelFactory::make( ['entries' => [$this->getFolderResponse()]] ),
+            ModelFactory::make( ['entries' => [$this->getFileResponse()]] )
+        );
+        $result = $this->adapter->listContents('/', true);
+        $this->assertInternalType('array', $result);
+        $this->assertCount(2, $result);
+
+        // No items in the listing because client throws exception
+        $this->mock->listFolder(Argument::any())->willThrow(new DropboxClientException('Message'));
+        $resp = $this->adapter->listContents('/', false);
+        $this->assertCount(0, $resp);
+    }
 }

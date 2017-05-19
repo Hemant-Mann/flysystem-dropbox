@@ -191,7 +191,26 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function listContents($directory = '', $recursive = false) {
-        
+        $listing = [];
+        $directory = trim($directory, '/.');
+        $location = $this->applyPathPrefix($directory);
+        try {
+            $listFolderContents = $this->client->listFolder($location);
+            $items = $listFolderContents->getItems();
+
+            foreach ($items->all() as $i) {
+                $obj = $this->normalizeResponse($i);
+                $listing[] = $obj;
+
+                if ($recursive && $obj['type'] === 'dir') {
+                    $path = $this->removePathPrefix($obj['path']);
+                    $listing = array_merge($listing, $this->listContents($path, true));
+                }
+            }
+            return $listing;
+        } catch (DropboxClientException $e) {
+            return $listing;
+        }
     }
 
     /**
