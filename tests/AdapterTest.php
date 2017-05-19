@@ -85,4 +85,20 @@ class AdapterTest extends TestCase {
         $resp = $this->adapter->createDir('/', new Config());
         $this->assertFalse($resp);
     }
+
+    public function testRename() {
+        $this->mock->move(Argument::type('string'), Argument::type('string'))->willReturn(Argument::type('object'));
+        $this->assertTrue($this->adapter->rename('something', 'something'));
+
+        $this->mock->move(Argument::type('string'), Argument::type('string'))->willThrow(new DropboxClientException('Message'));
+        $this->assertFalse($this->adapter->rename('/something', '/'));
+    }
+
+    public function testCopy() {
+        $this->mock->copy(Argument::type('string'), Argument::type('string'))->willReturn(Argument::type('object'));
+        $this->assertTrue($this->adapter->copy('something', 'something'));
+
+        $this->mock->copy(Argument::type('string'), Argument::type('string'))->willThrow(new DropboxClientException('Message'));
+        $this->assertFalse($this->adapter->copy('/something', '/'));
+    }
 }

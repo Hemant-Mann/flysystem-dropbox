@@ -75,14 +75,32 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function rename($path, $newpath) {
-        
+        $path = $this->applyPathPrefix($path);
+        $newpath = $this->applyPathPrefix($newpath);
+
+        try {
+            $this->client->move($path, $newpath);
+        } catch (DropboxClientException $e) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
      * {@inheritdoc}
      */
     public function copy($path, $newpath) {
-        
+        $path = $this->applyPathPrefix($path);
+        $newpath = $this->applyPathPrefix($newpath);
+
+        try {
+            $this->client->copy($path, $newpath);
+        } catch (DropboxClientException $e) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
