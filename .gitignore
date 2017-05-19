@@ -10,3 +10,4 @@ bin/
 
 # Test Coverage
 coverage/
+coverage.xml
