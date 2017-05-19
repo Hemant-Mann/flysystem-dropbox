@@ -8,7 +8,8 @@ use Kunnu\Dropbox\Exceptions\DropboxClientException;
 use HemantMann\Flysystem\Dropbox\Adapter;
 
 class AdapterTest extends TestCase {
-	public function setUp() {
+	
+    public function setUp() {
         $this->mock = $this->prophesize('Kunnu\Dropbox\Dropbox');
         $this->adapter = new Adapter($this->mock->reveal());
     }
@@ -35,6 +36,10 @@ class AdapterTest extends TestCase {
         return ['.tag' => 'file', 'name' => 'file.pdf', 'path_display' => '/File.pdf', 'id' => 'id:123', 'size' => 21388];
     }
 
+    protected function getFolderResponse() {
+        return ['.tag' => 'folder', 'name' => 'foldername', 'path_display' => 'FolderName', 'id' => 'id:123'];
+    }
+
     /**
      * @dataProvider metadataProvider
      */
@@ -53,23 +58,31 @@ class AdapterTest extends TestCase {
         $this->assertFalse($resp);
     }
 
-    /**
-     * @dataProvider  dropboxProvider
-     */
-    public function testDelete(Adapter $adapter, $mock) {
-        $mock->delete(Argument::type('string'))->willReturn(ModelFactory::make(['name' => "file.pdf"]));
-        $response = $adapter->delete('/something');
-        $response = $adapter->deleteDir('/something');
+    public function testDelete() {
+        $this->mock->delete(Argument::type('string'))->willReturn(ModelFactory::make(['name' => "file.pdf"]));
+        $response = $this->adapter->delete('/something');
+        $response = $this->adapter->deleteDir('/something');
         $this->assertTrue($response);
+
+        // let delete fail
+        $this->mock->delete(Argument::any(), Argument::any())->willThrow(new DropboxClientException('Message'));
+        $resp = $this->adapter->delete('something', 'something');
+        $resp = $this->adapter->deleteDir('something', 'something');
+        $this->assertFalse($resp);
     }
 
-    /**
-     * @dataProvider  dropboxProvider
-     */
-    public function testDeleteFail(Adapter $adapter, $mock) {
-        $mock->delete(Argument::any(), Argument::any())->willThrow(new DropboxClientException('Message'));
-        $resp = $adapter->delete('something', 'something');
-        $resp = $adapter->deleteDir('something', 'something');
+    public function testCreateDir() {
+        $arr = $this->getFolderResponse();
+        $this->mock->createFolder(Argument::type('string'))->willReturn(ModelFactory::make($arr));
+        $resp = $this->adapter->createDir('/my/cool/dir', new Config());
+        
+        $this->assertInternalType('array', $resp);
+        $this->assertArrayHasKey('type', $resp);
+        $this->assertEquals('dir', $resp['type']);
+
+        // Let the create dir fail
+        $this->mock->createFolder(Argument::type('string'))->willThrow(new DropboxClientException('Invalid Path'));
+        $resp = $this->adapter->createDir('/', new Config());
         $this->assertFalse($resp);
     }
 }

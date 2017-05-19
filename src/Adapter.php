@@ -112,7 +112,13 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function createDir($path, Config $config) {
-        
+        $location = $this->applyPathPrefix($path);
+        try {
+            $result = $this->client->createFolder($location);
+            return $this->normalizeResponse($result);
+        } catch (DropboxClientException $e) {
+            return false;
+        }
     }
 
     /**
