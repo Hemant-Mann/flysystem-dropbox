@@ -1,0 +1,12 @@
+# Composer Files
+vendor/
+composer.lock
+
+# OS Files
+.DS_Store
+
+# Config Dir
+bin/
+
+# Test Coverage
+coverage/

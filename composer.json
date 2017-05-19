@@ -1,0 +1,6 @@
+{
+    "require": {
+        "league/flysystem": "^1.0",
+        "kunalvarma05/dropbox-php-sdk": "^0.2.0"
+    }
+}
