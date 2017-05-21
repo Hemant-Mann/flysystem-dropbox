@@ -14,14 +14,6 @@ class AdapterTest extends TestCase {
         $this->adapter = new Adapter($this->mock->reveal());
     }
 
-    public function dropboxProvider() {
-        $mock = $this->prophesize('Kunnu\Dropbox\Dropbox');
-
-        return [
-            [new Adapter($mock->reveal()), $mock]
-        ];
-    }
-
     public function metadataProvider() {
         return [
             ['getMetadata'],
@@ -47,6 +39,10 @@ class AdapterTest extends TestCase {
         $arr = $this->getFileResponse();
         $this->mock->getMetadata(Argument::type('string'), Argument::type('array'))->willReturn(ModelFactory::make($arr));
         $this->assertInternalType('array', $this->adapter->{$method}('one'));
+    }
+
+    public function testGetClient() {
+        $this->assertInstanceOf('Kunnu\Dropbox\Dropbox', $this->adapter->getClient());
     }
 
     /**
@@ -124,33 +120,35 @@ class AdapterTest extends TestCase {
         $this->mock->simpleUpload(Argument::type('string'), Argument::type('string'), Argument::type('array'))
             ->willReturn(ModelFactory::make($arr));
 
-        $result = $this->adapter->write('something', 'contents', $config);
-        $this->assertInternalType('array', $result);
-        $this->assertArrayHasKey('type', $result);
-        $this->assertEquals('file', $result['type']);
+        $result = $this->adapter->update('something', 'contents', $config);
+        $this->updateTests($result);
 
         // let the write fail
         $this->mock->simpleUpload(Argument::type('string'), Argument::type('string'), Argument::type('array'))
             ->willThrow(new DropboxClientException('Message'));
-        $resp = $this->adapter->write('something', 'contents', $config);
+        $resp = $this->adapter->update('something', 'contents', $config);
         $this->assertFalse($resp);
     }
 
-    public function testWriteStream() {
+    public function testUpdateStream() {
         $config = new Config();
         $arr = $this->getFileResponse();
         $this->mock->uploadChunked(Argument::type('string'), Argument::type('string'), Argument::type('integer'), Argument::type('integer'), Argument::type('array'))
             ->willReturn(ModelFactory::make($arr));
 
-        $result = $this->adapter->writeStream('something', tmpfile(), $config);
+        $result = $this->adapter->updateStream('something', tmpfile(), $config);
+        $this->updateTests($result);
+
+        // let the update fail
+        $this->mock->uploadChunked(Argument::type('string'), Argument::type('string'), Argument::type('integer'), Argument::type('integer'), Argument::type('array'))
+            ->willThrow(new DropboxClientException('Message'));
+        $resp = $this->adapter->updateStream('something', tmpfile(), $config);
+        $this->assertFalse($resp);
+    }
+
+    protected function updateTests($result) {
         $this->assertInternalType('array', $result);
         $this->assertArrayHasKey('type', $result);
         $this->assertEquals('file', $result['type']);
-
-        // let the write fail
-        $this->mock->uploadChunked(Argument::type('string'), Argument::type('string'), Argument::type('integer'), Argument::type('integer'), Argument::type('array'))
-            ->willThrow(new DropboxClientException('Message'));
-        $resp = $this->adapter->writeStream('something', tmpfile(), $config);
-        $this->assertFalse($resp);
     }
 }

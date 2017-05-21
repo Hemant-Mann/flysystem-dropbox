@@ -51,14 +51,14 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function update($path, $contents, Config $config) {
-
+        return $this->write($path, $contents, $config);
     }
 
     /**
      * {@inheritdoc}
      */
     public function updateStream($path, $resource, Config $config) {
-        
+        return $this->writeStream($path, $resource, $config);
     }
 
     /**
