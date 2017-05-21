@@ -3,6 +3,7 @@
 namespace HemantMann\Flysystem\Dropbox;
 
 use League\Flysystem\Config;
+use League\Flysystem\Util;
 use League\Flysystem\Util\MimeType;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
@@ -33,14 +34,17 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function write($path, $contents, Config $config) {
-        
+        $autoRename = $config->get('autoRename', false);
+        return $this->upload($path, $contents, ['autorename' => $autoRename]);
     }
 
     /**
      * {@inheritdoc}
      */
     public function writeStream($path, $resource, Config $config) {
-        
+        $chunkSize = $config->get('chunkSize', 5);
+        $autoRename = $config->get('autoRename', false);
+        return $this->uploadChunked($path, $resource, $chunkSize, ['autorename' => $autoRename]);
     }
 
     /**
@@ -250,5 +254,35 @@ class Adapter extends AbstractAdapter {
                 break;
         }
         return $result;
+    }
+
+    protected function upload($path, $contents, $opts = []) {
+        try {
+            $tmpfile = tmpfile();
+            fwrite($tmpfile, $contents);
+            $localFile = $this->getStreamUri($tmpfile);
+
+            $obj = $this->client->simpleUpload($localFile, $path, $opts);
+            fclose($tmpfile);
+            return $this->normalizeResponse($obj);
+        } catch (DropboxClientException $e) {
+            return false;
+        }
+    }
+
+    protected function uploadChunked($path, $resource, $chunkSize = 5, $opts = []) {
+        try {
+            $fileSize = Util::getStreamSize($resource);
+            $localFile = $this->getStreamUri($resource);
+
+            $file = $this->client->uploadChunked($localFile, $path, $fileSize, $chunkSize, $opts);
+            return $this->normalizeResponse($file);
+        } catch (DropboxClientException $e) {
+            return false;
+        }
+    }
+
+    protected function getStreamUri($stream) {
+        return stream_get_meta_data($stream)['uri'];
     }
 }

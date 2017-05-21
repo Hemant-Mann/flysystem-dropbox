@@ -116,4 +116,41 @@ class AdapterTest extends TestCase {
         $resp = $this->adapter->listContents('/', false);
         $this->assertCount(0, $resp);
     }
+
+    public function testWrite() {
+        $config = new Config(); $config->set('autoRename', false);
+        $arr = $this->getFileResponse();
+
+        $this->mock->simpleUpload(Argument::type('string'), Argument::type('string'), Argument::type('array'))
+            ->willReturn(ModelFactory::make($arr));
+
+        $result = $this->adapter->write('something', 'contents', $config);
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('type', $result);
+        $this->assertEquals('file', $result['type']);
+
+        // let the write fail
+        $this->mock->simpleUpload(Argument::type('string'), Argument::type('string'), Argument::type('array'))
+            ->willThrow(new DropboxClientException('Message'));
+        $resp = $this->adapter->write('something', 'contents', $config);
+        $this->assertFalse($resp);
+    }
+
+    public function testWriteStream() {
+        $config = new Config();
+        $arr = $this->getFileResponse();
+        $this->mock->uploadChunked(Argument::type('string'), Argument::type('string'), Argument::type('integer'), Argument::type('integer'), Argument::type('array'))
+            ->willReturn(ModelFactory::make($arr));
+
+        $result = $this->adapter->writeStream('something', tmpfile(), $config);
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('type', $result);
+        $this->assertEquals('file', $result['type']);
+
+        // let the write fail
+        $this->mock->uploadChunked(Argument::type('string'), Argument::type('string'), Argument::type('integer'), Argument::type('integer'), Argument::type('array'))
+            ->willThrow(new DropboxClientException('Message'));
+        $resp = $this->adapter->writeStream('something', tmpfile(), $config);
+        $this->assertFalse($resp);
+    }
 }
