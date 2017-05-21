@@ -3,6 +3,7 @@ use Prophecy\Argument;
 use League\Flysystem\Config;
 use PHPUnit\Framework\TestCase;
 
+use Kunnu\Dropbox\Models\File as FileModel;
 use Kunnu\Dropbox\Models\ModelFactory;
 use Kunnu\Dropbox\Exceptions\DropboxClientException;
 use HemantMann\Flysystem\Dropbox\Adapter;
@@ -150,5 +151,20 @@ class AdapterTest extends TestCase {
         $this->assertInternalType('array', $result);
         $this->assertArrayHasKey('type', $result);
         $this->assertEquals('file', $result['type']);
+    }
+
+    public function testRead() {
+        $arr = $this->getFileResponse();
+
+        $this->mock->download(Argument::type('string'))->willReturn(new FileModel($arr, 'hello'));
+        $result = $this->adapter->read('/something');
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('contents', $result);
+        $this->assertEquals('hello', $result['contents']);
+
+        // let the read fail
+        $this->mock->download(Argument::any(), Argument::any())->willThrow(new DropboxClientException('Message'));
+        $resp = $this->adapter->read('something', 'something');
+        $this->assertFalse($resp);
     }
 }

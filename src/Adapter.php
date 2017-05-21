@@ -65,7 +65,18 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function read($path) {
-        
+        $path = $this->applyPathPrefix($path);
+        try {
+            $file = $this->client->download($path); // returns an object
+            $contents = $file->getContents();
+
+            $obj = $file->getMetadata();    // the metadata on file contains the useful response
+            $resp = $this->normalizeResponse($obj);
+            $resp['contents'] = $contents;
+            return $resp;
+        } catch (DropboxClientException $e) {
+            return false;
+        }
     }
 
     /**
