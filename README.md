@@ -1,4 +1,6 @@
 # Flysystem Adapter for Dropbox
+[![Build Status](https://img.shields.io/travis/Hemant-Mann/flysystem-dropbox/master.svg?style=flat-square)](https://travis-ci.org/Hemant-Mann/flysystem-dropbox)
+
 This is the Dropbox Adapter for the flysystem based on the v2 API of the Dropbox. This adapter supports PHP5
 
 ## Usage
