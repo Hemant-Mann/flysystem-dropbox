@@ -267,6 +267,9 @@ class Adapter extends AbstractAdapter {
         return $result;
     }
 
+    /**
+     * This function uploads the file to the API using simple upload
+     */
     protected function upload($path, $contents, $opts = []) {
         try {
             $tmpfile = tmpfile();
@@ -281,6 +284,9 @@ class Adapter extends AbstractAdapter {
         }
     }
 
+    /**
+     * This function uploads the file in chunks instead of whole file
+     */
     protected function uploadChunked($path, $resource, $chunkSize = 5, $opts = []) {
         try {
             $fileSize = Util::getStreamSize($resource);

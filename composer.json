@@ -21,5 +21,8 @@
         "psr-4": {
             "HemantMann\\Flysystem\\Dropbox\\": "src/"
         }
+    },
+    "config": {
+        "bin-dir": "bin"
     }
 }
