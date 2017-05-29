@@ -1,4 +1,7 @@
 # Flysystem Adapter for Dropbox
+
+[![Author](http://img.shields.io/badge/author-@hemantmann-blue.svg?style=flat-square)](https://twitter.com/HemantMann13)
+[![Codecov](https://img.shields.io/codecov/c/github/Hemant-Mann/flysystem-dropbox.svg?style=flat-square&maxAge=0)](https://codecov.io/gh/Hemant-Mann/flysystem-dropbox)
 [![Build Status](https://img.shields.io/travis/Hemant-Mann/flysystem-dropbox/master.svg?style=flat-square)](https://travis-ci.org/Hemant-Mann/flysystem-dropbox)
 
 This is the Dropbox Adapter for the flysystem based on the v2 API of the Dropbox. This adapter supports PHP5
@@ -22,4 +25,11 @@ $dropboxClient = new Dropbox($app);
 $adapter = new Adapter($dropboxClient);
 
 $filesystem = new Filesystem($adapter);
+```
+
+## Tests
+
+```bash
+composer install
+bin/phpunit
 ```

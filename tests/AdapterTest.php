@@ -167,4 +167,19 @@ class AdapterTest extends TestCase {
         $resp = $this->adapter->read('something', 'something');
         $this->assertFalse($resp);
     }
+
+    public function testReadStream() {
+        $arr = $this->getFileResponse();
+
+        $this->mock->download(Argument::type('string'), Argument::type('string'))->willReturn(new FileModel($arr, 'hello'));
+        $result = $this->adapter->readStream('/something');
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('stream', $result);
+    }
+
+    public function testReadStreamFail() {
+        $this->mock->download(Argument::any(), Argument::any())->willThrow(new DropboxClientException('Message'));
+        $resp = $this->adapter->readStream('/');
+        $this->assertFalse($resp);
+    }
 }

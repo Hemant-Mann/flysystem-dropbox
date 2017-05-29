@@ -83,7 +83,19 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function readStream($path) {
-        
+        try {
+            $tmpfile = tmpfile();
+            $localFile = $this->getStreamUri($tmpfile);
+
+            $location = $this->applyPathPrefix($path);
+            $file = $this->client->download($location, $localFile);
+            $obj = $this->normalizeResponse($file->getMetadata());
+            
+            $obj['stream'] = $tmpfile;
+            return $obj;
+        } catch (DropboxClientException $e) {
+            return false;
+        }
     }
 
     /**
