@@ -42,7 +42,7 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function writeStream($path, $resource, Config $config) {
-        $chunkSize = $config->get('chunkSize', 5);
+        $chunkSize = $config->get('chunkSize', 8000000);
         $autoRename = $config->get('autoRename', false);
         return $this->uploadChunked($path, $resource, $chunkSize, ['autorename' => $autoRename]);
     }
@@ -65,9 +65,9 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function read($path) {
-        $path = $this->applyPathPrefix($path);
+        $location = $this->applyPathPrefix($path);
         try {
-            $file = $this->client->download($path); // returns an object
+            $file = $this->client->download($location); // returns an object
             $contents = $file->getContents();
 
             $obj = $file->getMetadata();    // the metadata on file contains the useful response
@@ -83,11 +83,11 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function readStream($path) {
+        $location = $this->applyPathPrefix($path);
         try {
             $tmpfile = tmpfile();
             $localFile = $this->getStreamUri($tmpfile);
 
-            $location = $this->applyPathPrefix($path);
             $file = $this->client->download($location, $localFile);
             $obj = $this->normalizeResponse($file->getMetadata());
             
@@ -283,12 +283,13 @@ class Adapter extends AbstractAdapter {
      * This function uploads the file to the API using simple upload
      */
     protected function upload($path, $contents, $opts = []) {
+        $location = $this->applyPathPrefix($path);
         try {
             $tmpfile = tmpfile();
             fwrite($tmpfile, $contents);
             $localFile = $this->getStreamUri($tmpfile);
 
-            $obj = $this->client->simpleUpload($localFile, $path, $opts);
+            $obj = $this->client->simpleUpload($localFile, $location, $opts);
             fclose($tmpfile);
             return $this->normalizeResponse($obj);
         } catch (DropboxClientException $e) {
@@ -299,12 +300,13 @@ class Adapter extends AbstractAdapter {
     /**
      * This function uploads the file in chunks instead of whole file
      */
-    protected function uploadChunked($path, $resource, $chunkSize = 5, $opts = []) {
+    protected function uploadChunked($path, $resource, $chunkSize = 8000000, $opts = []) {
+        $location = $this->applyPathPrefix($path);
         try {
             $fileSize = Util::getStreamSize($resource);
             $localFile = $this->getStreamUri($resource);
 
-            $file = $this->client->uploadChunked($localFile, $path, $fileSize, $chunkSize, $opts);
+            $file = $this->client->uploadChunked($localFile, $location, $fileSize, $chunkSize, $opts);
             return $this->normalizeResponse($file);
         } catch (DropboxClientException $e) {
             return false;
