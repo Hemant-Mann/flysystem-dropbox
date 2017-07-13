@@ -100,16 +100,15 @@ class AdapterTest extends TestCase {
     }
 
     public function testListContents() {
-        $this->mock->listFolder(Argument::any())->willReturn(
-            ModelFactory::make( ['entries' => [$this->getFolderResponse()]] ),
-            ModelFactory::make( ['entries' => [$this->getFileResponse()]] )
+        $this->mock->listFolder(Argument::any(), Argument::any())->willReturn(
+            ModelFactory::make( ['entries' => [$this->getFolderResponse()]] )
         );
-        $result = $this->adapter->listContents('/', true);
+        $result = $this->adapter->listContents('/');
         $this->assertInternalType('array', $result);
-        $this->assertCount(2, $result);
+        $this->assertCount(1, $result);
 
         // No items in the listing because client throws exception
-        $this->mock->listFolder(Argument::any())->willThrow(new DropboxClientException('Message'));
+        $this->mock->listFolder(Argument::any(), Argument::any())->willThrow(new DropboxClientException('Message'));
         $resp = $this->adapter->listContents('/', false);
         $this->assertCount(0, $resp);
     }

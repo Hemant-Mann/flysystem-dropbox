@@ -222,17 +222,12 @@ class Adapter extends AbstractAdapter {
         $directory = trim($directory, '/.');
         $location = $this->applyPathPrefix($directory);
         try {
-            $listFolderContents = $this->client->listFolder($location);
+            $listFolderContents = $this->client->listFolder($location, ['recursive' => $recursive]);
             $items = $listFolderContents->getItems();
 
             foreach ($items->all() as $i) {
                 $obj = $this->normalizeResponse($i);
                 $listing[] = $obj;
-
-                if ($recursive && $obj['type'] === 'dir') {
-                    $path = $this->removePathPrefix($obj['path']);
-                    $listing = array_merge($listing, $this->listContents($path, true));
-                }
             }
             return $listing;
         } catch (DropboxClientException $e) {
