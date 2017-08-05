@@ -35,7 +35,8 @@ class Adapter extends AbstractAdapter {
      */
     public function write($path, $contents, Config $config) {
         $autoRename = $config->get('autoRename', false);
-        return $this->upload($path, $contents, ['autorename' => $autoRename]);
+        $mode = $config->get('mode', 'add');
+        return $this->upload($path, $contents, ['autorename' => $autoRename, 'mode' => $mode]);
     }
 
     /**
@@ -44,13 +45,15 @@ class Adapter extends AbstractAdapter {
     public function writeStream($path, $resource, Config $config) {
         $chunkSize = $config->get('chunkSize', 8000000);
         $autoRename = $config->get('autoRename', false);
-        return $this->uploadChunked($path, $resource, $chunkSize, ['autorename' => $autoRename]);
+        $mode = $config->get('mode', 'add');
+        return $this->uploadChunked($path, $resource, $chunkSize, ['autorename' => $autoRename, 'mode' => $mode]);
     }
 
     /**
      * {@inheritdoc}
      */
     public function update($path, $contents, Config $config) {
+        $config->set('mode', 'overwrite');
         return $this->write($path, $contents, $config);
     }
 
@@ -58,6 +61,7 @@ class Adapter extends AbstractAdapter {
      * {@inheritdoc}
      */
     public function updateStream($path, $resource, Config $config) {
+        $config->set('mode', 'overwrite');
         return $this->writeStream($path, $resource, $config);
     }
 
