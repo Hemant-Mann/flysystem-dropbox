@@ -141,13 +141,10 @@ class Adapter extends AbstractAdapter {
         $location = $this->applyPathPrefix($path);
         try {
             $obj = $this->client->delete($location);
-            if (is_a($obj, 'Kunnu\Dropbox\Models\DeletedMetadata')) {
-                return true;
-            }
         } catch (DropboxClientException $e) {
-            // may be path is wrong
+            return false;
         }
-        return false;
+        return true;
     }
 
     /**
